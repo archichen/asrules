@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>学生发展评价系统</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/css/bootstrap.min.css">
+  <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/js/bootstrap.min.js"></script>
+  <script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.min.js"></script>
+<!--  <link rel="stylesheet" href="../static/index.css">-->
+<!--  <script src="../static/index.js"></script>-->
+     <link rel="stylesheet" th:href="@{/index.css}">
+     <script th:src="@{/index.js}"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+  <!-- Brand/logo -->
+  <a class="navbar-brand" href="#">学生发展评价</a>
+  
+  <!-- Links -->
+  <ul class="navbar-nav nav">
+    <li class="nav-item">
+      <a class="nav-link"  href="#home" data-toggle="tab">关联规则挖掘</a>
+    </li>
+  </ul>
+</nav>
+<br><br><br>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-6">
+           <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4">
+                <div class="form">
+                    <div class="form-group">
+                        <label for="gpaorscore">选择输入成绩类型：</label>
+                        <select id="gpaorscore" class="form-control" onchange="gpaorscore()">
+                            <option value="SCORE">成绩</option>
+                            <option value="GPA">GPA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input id="antecedent" type="text" class="form-control" placeholder="数学:A,英语:B,语文:C..." value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="schoolarship">奖学金：</label>
+                        <input id="schoolarship" type="text" class="form-control" placeholder="一等奖,二等奖,三等奖..." value="一等奖">
+                    </div>
+                    <div class="form-group">
+                        <label for="competition">竞赛成绩：</label>
+                        <input id="competition" type="text" class="form-control" placeholder="国家级:一等奖,省级:二等奖..." value="国家级:三等奖,省级:二等奖">
+                    </div>
+                    <div class="form-group">
+                        <label for="similarityratio">输入数据相似度：</label>
+                        <input id="similarityratio" type="number" class="form-control" placeholder="0.5" value="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="consequenttype">选择预测类型：</label>
+                        <select id="consequenttype" class="form-control" onchange="kyorrd()">
+                            <option value="KY">考研</option>
+                            <option value="RD">入党</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="consequent">选择预测结果</label>
+                        <select name="consequent" id="consequent" class="form-control">
+                                <option value='名校'>名校</option>
+                                <option value='普通院校'>普通院校</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="request()">提交</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4"></div>
+           </div>
+        </div>
+        <div class="col-6 chartbox">
+                <div id="main" style="width: 600px;height:400px;"></div>
+                <h4>继续发展建议</h4>
+                <br/>
+                <ul class="list-group" id="advise">
+                    <li class="list-group-item"><small>点击图表获得发展建议</small></li>
+                </ul>
+        </div>
+    </div>
+</div>
+
+<!--<img th:src="@{/questionMark.svg}" alt="" id="questionMark" data-toggle="modal" data-target="#myModal">-->
+<div id="questionMark" data-toggle="modal" data-target="#myModal">?</div>
+<!-- 模态框 -->
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+   
+        <!-- 模态框头部 -->
+        <div class="modal-header">
+          <h4 class="modal-title">使用帮助</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+   
+        <!-- 模态框主体 -->
+        <div class="modal-body">
+          <p>
+              学生发展评价系统中，成绩分数和GPA统一使用标准值替代处理。比如绩点在<mark>0~1.9</mark>之间都用标准值<mark>C</mark>来替换具体数值。
+          </p>
+          <p>具体标准值规则如下：</p>
+          <h4>对于GPA</h4>
+          <table class="table table-hover table-dark">
+              <thead>
+                <tr>
+                    <td>GPA区间</td>
+                    <td>标准值</td>
+                </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td>大于3.0</td>
+                      <td>A</td>
+                  </tr>
+                  <tr>
+                    <td>2.0 ~ 2.9</td>
+                    <td>B</td>
+                    </tr>
+                <tr>
+                    <td>0 ~ 1.9</td>
+                    <td>C</td>
+                </tr>
+              </tbody>
+          </table>
+          <h4>对于成绩</h4>
+          <table class="table table-hover table-dark">
+              <thead>
+                <tr>
+                    <td>分值区间</td>
+                    <td>标准值</td>
+                </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td>80-100</td>
+                      <td>A</td>
+                  </tr>
+                  <tr>
+                    <td>60-79</td>
+                    <td>B</td>
+                    </tr>
+                <tr>
+                    <td>40-59</td>
+                    <td>C</td>
+                </tr>
+                <tr>
+                    <td>20-39</td>
+                    <td>D</td>
+                </tr>
+                <tr>
+                    <td>0-19</td>
+                    <td>E</td>
+                </tr>
+              </tbody>
+          </table>
+        </div>
+   
+        <!-- 模态框底部 -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+        </div>
+   
+      </div>
+    </div>
+  </div>
+
+<style>
+    .chartbox {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .list-group-item {
+        width: 200px;
+        background: #343a40;
+        color: whitesmoke;
+        text-align: center;
+    }
+
+    #questionMark {
+        background: #585c5f;
+        width: 61.8px;
+        height: 61.8px;
+        padding: 10px;
+        border-radius: 61.8px;
+        position: absolute;
+        right: 50px;
+        bottom: 50px;
+        cursor: pointer;
+        color: whitesmoke;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 50px;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+
+    #questionMark:hover {
+        background: #74787b;
+    }
+
+    #questionMark:active {
+        background: #292b2e;
+    }
+
+    .modal-content, .modal-header, .modal-body, .modal-footer, .close {
+        background: #2a2e33;
+        color: whitesmoke;
+        border-color: #343a40
+    }
+
+    .close:hover {
+        color: whitesmoke;
+    }
+</style>
+</body>
+</html>
